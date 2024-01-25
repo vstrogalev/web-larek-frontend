@@ -1,103 +1,151 @@
-import _ from "lodash";
-import {dayjs, formatNumber} from "../utils/utils";
-
-import {Model} from "./base/Model";
-import {IEvents} from "../components/base/events";
-import {FormErrors, IAppState, IProduct, IOrder, IOrderForm,  Currency, Id, DeliveryMethod} from "../types";
+import { Model } from './base/Model';
+import { IEvents } from '../components/base/events';
+import {
+	FormErrors,
+	IAppState,
+	IProduct,
+	IOrder,
+	IContactForm,
+	Currency,
+	Id,
+	PaymentMethod,
+} from '../types';
 
 export type CatalogChangeEvent = {
-    catalog: Product[]
+	catalog: Product[];
 };
 
 export class Product extends Model<IProduct> implements IProduct {
-    id: Id;
-    description: string;
-    image: string;
-    title: string;
-    category: string;
-    status: boolean;
-    price: Currency;
-
-    productOrdered(price: number): void {
-        this.price = price;
-
-        this.emitChanges('basket:changed', { id: this.id, price });
-    }
-
+	id: Id;
+	description: string;
+	image: string;
+	title: string;
+	category: string;
+	status: boolean;
+	price: Currency;
 }
 
 export class AppState extends Model<IAppState> {
-    basket: Product[];
-    catalog: Product[];
-    loading: boolean;
-    order: IOrder = {
-        email: '',
-        phone: '',
-        address: '',
-        items: [],
-        total: 0,
-        payment: "online"
+	basket: IProduct[];
+	catalog: IProduct[];
+	loading: boolean;
+	order: IOrder;
+	preview: string | null;
+	formErrors: FormErrors = {};
+
+	constructor(data: Partial<IAppState>, protected events: IEvents) {
+		super(data, events);
+    this.resetOrder();
+		this.basket = [];
+	}
+
+	// добавление товара
+	addProduct(item: IProduct) {
+		this.basket.push(item);
+		this.emitChanges('basket:changed');
+	}
+
+	// удаление товара
+	deleteProduct(id: string) {
+		this.basket = this.basket.filter((item) => item.id !== id);
+		this.emitChanges('basket:changed');
+	}
+
+	// очищает корзину, устанавливает изначальное состояние
+  clearBasket(): void {
+		this.basket = [];
+    this.resetOrder();
+		this.emitChanges('basket:changed');
+	}
+
+  // сбрасывает заказ в начальное состояние
+  resetOrder() {
+    this.order = {
+      payment: '',
+      email: '',
+      phone: '',
+      address: '',
+      items: [],
+      total: 0,
     };
-    preview: string | null;
-    formErrors: FormErrors = {};
+  }
 
-    constructor(data: Partial<IAppState>, protected events: IEvents) {
-      super(data, events);
-      this.basket = [];
-    }
+	getTotal(): number {
+		return this.basket.reduce((total, item) => total + item.price, 0);
+	}
 
-    // !!! исключение, включение товара
-    toggleOrderedProduct(id: string, isIncluded: boolean) {
-        if (isIncluded) {
-            this.order.items = _.uniq([...this.order.items, id]);
-        } else {
-            this.order.items = _.without(this.order.items, id);
-        }
-    }
+	setCatalog(items: IProduct[]): void {
+		this.catalog = items.map((item) => new Product(item, this.events));
+		this.emitChanges('catalog:changed', { catalog: this.catalog });
+	}
 
-    clearBasket() {
-        this.order.items.forEach(id => {
-            this.toggleOrderedProduct(id, false);
-        });
-    }
+	getOrderedProducts(): IProduct[] {
+		return this.basket;
+	}
 
-    getTotal() {
-        return this.order.items.reduce((a, c) => a + this.catalog.find(it => it.id === c).price, 0)
-    }
+	completeOrder(): void {
+		this.order.total = this.getTotal();
+		this.order.items = this.getOrderedProducts().map((item) => item.id);
+	}
 
-    setCatalog(items: IProduct[]) {
-        this.catalog = items.map(item => new Product(item, this.events));
-        this.emitChanges('items:changed', { catalog: this.catalog });
-    }
+	/**
+	 *Инициирует обновление превью для товара
+	 *и запускает событие preview:changed
+	 * @param item
+	 */
+	setPreview(item: IProduct) {
+		this.preview = item.id;
+		this.emitChanges('preview:changed', item);
+	}
 
-    getOrderedProducts(): Product[] {
-        return this.basket;
-    }
+	setPaymentMethod(method: string) {
+		this.order.payment = method as PaymentMethod;
+    if (this.validateDelivery()) {
+			this.events.emit('delivery:ready', this.order);
+		}
+	}
 
-    setPreview(item: Product) {
-        this.preview = item.id;
-        this.emitChanges('preview:changed', item);
-    }
+	setAddress(value: string) {
+		this.order.address = value;
 
-    setOrderField(field: keyof IOrderForm, value: IOrderForm) {
-        // this.order[field] = value;
+		if (this.validateDelivery()) {
+			this.events.emit('delivery:ready', this.order);
+		}
+	}
 
-        if (this.validateOrder()) {
-            this.events.emit('order:ready', this.order);
-        }
-    }
+	validateDelivery(): boolean {
+		const errors: typeof this.formErrors = {};
 
+		if (!this.order.payment) {
+			errors.payment = 'Необходимо указать способ оплаты';
+		}
+		if (!this.order.address) {
+			errors.address = 'Необходимо указать адрес';
+		}
+		this.formErrors = errors;
+		this.events.emit('formDeliveryErrors:change', this.formErrors);
 
-    validateOrder() {
-        const errors: typeof this.formErrors = {};
-        if (!this.order.email) {
-            errors.email = 'Необходимо указать email';
-        }
-        if (!this.order.phone) {
-            errors.phone = 'Необходимо указать телефон';
-        }
-        this.formErrors = errors;
-        this.events.emit('formErrors:change', this.formErrors);
-        return Object.keys(errors).length === 0;
-    }
+		return Object.keys(errors).length === 0;
+	}
+
+	setContactsField(field: keyof IContactForm, value: string): void {
+		this.order[field] = value;
+
+		if (this.validateContacts()) {
+			this.events.emit('contacts:ready', this.order);
+		}
+	}
+
+	validateContacts(): boolean {
+		const errors: typeof this.formErrors = {};
+		if (!this.order.email) {
+			errors.email = 'Необходимо указать email';
+		}
+		if (!this.order.phone) {
+			errors.phone = 'Необходимо указать телефон';
+		}
+		this.formErrors = errors;
+		this.events.emit('formContactsErrors:change', this.formErrors);
+		return Object.keys(errors).length === 0;
+	}
 }

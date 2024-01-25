@@ -1,19 +1,3 @@
-import dayjs from 'dayjs';
-import 'dayjs/locale/ru';
-import calendar from 'dayjs/plugin/calendar';
-import duration from 'dayjs/plugin/duration';
-import relativeTime from 'dayjs/plugin/relativeTime';
-
-dayjs.locale('ru');
-dayjs.extend(calendar);
-dayjs.extend(duration);
-dayjs.extend(relativeTime);
-
-export {
-    dayjs
-};
-
-
 export function pascalToKebab(value: string): string {
     return value.replace(/([a-z0–9])([A-Z])/g, "$1-$2").toLowerCase();
 }
@@ -152,9 +136,9 @@ export function createElement<
 
 /**
  * Форматирует число в денежное с разделителями
- * @param x 
- * @param sep 
- * @returns 
+ * @param x
+ * @param sep
+ * @returns
  */
 export function formatNumber(x: number, sep = ' '): string {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, sep);

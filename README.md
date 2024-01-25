@@ -5,7 +5,8 @@
 Структура проекта:
 - src/ — исходные файлы проекта
 - src/components/ — папка с JS компонентами
-- src/components/base/ — папка с базовым кодом
+- src/components/base/ — папка с базовыми классами
+- src/components/common/ — папка с основными классами
 
 Важные файлы:
 - src/pages/index.html — HTML-файл главной страницы
