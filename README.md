@@ -83,6 +83,7 @@ yarn build
 
 
 ## Ключевые типы данных
+```
 export type Id = string;
 export type Currency = number | null;
 export type PaymentMethod = 'card' | 'cash' | '';
@@ -134,7 +135,7 @@ export interface IAppState {
 	order: IOrder | null;
 	loading: boolean;
 }
-
+```
 
 
 
