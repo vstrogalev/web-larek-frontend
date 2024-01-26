@@ -4,9 +4,9 @@ import { LarekAPI } from './components/LarekAPI';
 import { API_URL, CDN_URL } from './utils/constants';
 import { EventEmitter } from './components/base/events';
 import { AppState, CatalogChangeEvent, Product } from './components/AppData';
-import { Page } from './components/Page';
+import { Page } from './components/common/Page';
 
-import { Card, BasketItem } from './components/Card';
+import { Card, BasketItem } from './components/common/Card';
 import { cloneTemplate, createElement, ensureElement } from './utils/utils';
 import { Modal } from './components/common/Modal';
 import { Basket } from './components/common/Basket';
@@ -56,7 +56,7 @@ const contactsForm = new Contacts(cloneTemplate(contactsTemplate), events);
 events.on<CatalogChangeEvent>('catalog:changed', () => {
 	page.catalog = appData.catalog.map((item) => {
 		const card = new Card('card', cloneTemplate(cardCatalogTemplate), {
-			onClick: () => events.emit('card:select', item),
+			onClick: () => events.emit('preview:changed', item),
 		});
 		return card.render({
 			category: item.category,
@@ -79,12 +79,9 @@ events.on('formDeliveryErrors:change', (errors: Partial<IDeliveryForm>) => {
 });
 
 // Изменился адрес доставки
-events.on(
-	/^order\..*:change/,
-	(data: { value: string }) => {
-		appData.setAddress(data.value);
-	}
-);
+events.on(/^order\..*:change/, (data: { value: string }) => {
+	appData.setAddress(data.value);
+});
 
 // Открыть форму доставки
 events.on('delivery:open', () => {
@@ -151,7 +148,7 @@ events.on('contacts:submit', () => {
 					onClick: () => {
 						modal.close();
 						appData.clearBasket();
-            deliveryForm.setClassPaymentMethod('')
+						deliveryForm.setClassPaymentMethod('');
 						events.emit('basket:changed');
 					},
 				}
@@ -193,13 +190,6 @@ events.on('basket:changed', () => {
 	});
 
 	basket.total = total;
-});
-
-/**
- * Открыть карточку товара
- */
-events.on('card:select', (item: Product) => {
-	appData.setPreview(item);
 });
 
 /**

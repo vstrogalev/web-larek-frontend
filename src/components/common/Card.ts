@@ -1,9 +1,6 @@
-import { Component } from './base/Component';
-import { Currency } from '../types/index';
-import {
-	ensureElement,
-	formatNumber,
-} from '../utils/utils';
+import { Component } from '../base/Component';
+import { Currency } from '../../types/index';
+import { ensureElement, formatNumber } from '../../utils/utils';
 
 interface ICardActions {
 	onClick: (event: MouseEvent) => void;
@@ -27,9 +24,9 @@ export class Card extends Component<ICard> {
 
 	private categoryMap: Record<string, string> = {
 		'софт-скил': '_soft',
-		'другое': '_other',
-		'дополнительное': '_additional',
-		'кнопка': '_button',
+		другое: '_other',
+		дополнительное: '_additional',
+		кнопка: '_button',
 		'хард-скил': '_hard',
 	};
 
@@ -49,7 +46,7 @@ export class Card extends Component<ICard> {
 			`.${blockName}__image`,
 			container
 		);
-    this._button = container.querySelector(`.${blockName}__button`);
+		this._button = container.querySelector(`.${blockName}__button`);
 		this._description = container.querySelector(`.${blockName}__description`);
 		this._price = container.querySelector(`.${blockName}__price`);
 
@@ -96,10 +93,13 @@ export class Card extends Component<ICard> {
 	}
 
 	set price(value: number) {
-		this.setText(this._price, value ? `${formatNumber(value)} синапсов` : 'Бесценно');
+		this.setText(
+			this._price,
+			value ? `${formatNumber(value)} синапсов` : 'Бесценно'
+		);
 	}
 
-  get price(): number {
+	get price(): number {
 		return Number(this._price.textContent) || 0;
 	}
 }
@@ -119,12 +119,12 @@ export class BasketItem extends Component<ItemBasket> {
 		super(container);
 
 		this._index = ensureElement<HTMLElement>(`.basket__item-index`, container);
-    this.setText(this._index, index + 1);
+		this.setText(this._index, index + 1);
 
 		this._title = ensureElement<HTMLElement>(`.card__title`, container);
 		this._price = ensureElement<HTMLElement>(`.card__price`, container);
 
-    this._toDelete = container.querySelector(`.card__button`);
+		this._toDelete = container.querySelector(`.card__button`);
 		this._toDelete.addEventListener('click', (event: MouseEvent) => {
 			event.preventDefault();
 			actions.onClick?.(event);
@@ -132,18 +132,21 @@ export class BasketItem extends Component<ItemBasket> {
 		});
 	}
 
-  set index(value: number) {
+	set index(value: number) {
 		this.setText(this._index, value + 1);
 	}
-  set title(value: string) {
+	set title(value: string) {
 		this.setText(this._title, value);
 	}
-  set price(value: number) {
-		this.setText(this._price, value ? `${formatNumber(value)} синапсов` : 'Бесценно');
+	set price(value: number) {
+		this.setText(
+			this._price,
+			value ? `${formatNumber(value)} синапсов` : 'Бесценно'
+		);
 	}
 
-  render(data: ItemBasket): HTMLElement {
-    Object.assign(this as object, data ?? {});
-    return this.container;
-  }
+	render(data: ItemBasket): HTMLElement {
+		Object.assign(this as object, data ?? {});
+		return this.container;
+	}
 }

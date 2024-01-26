@@ -88,16 +88,6 @@ export class AppState extends Model<IAppState> {
 		this.order.items = this.getOrderedProducts().map((item) => item.id);
 	}
 
-	/**
-	 *Инициирует обновление превью для товара
-	 *и запускает событие preview:changed
-	 * @param item
-	 */
-	setPreview(item: IProduct) {
-		this.preview = item.id;
-		this.emitChanges('preview:changed', item);
-	}
-
 	setPaymentMethod(method: string) {
 		this.order.payment = method as PaymentMethod;
     if (this.validateDelivery()) {
