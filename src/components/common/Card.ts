@@ -12,6 +12,7 @@ export interface ICard {
 	image: string;
 	price: Currency;
 	description: string;
+	button?: string;
 }
 
 export class Card extends Component<ICard> {
@@ -77,6 +78,10 @@ export class Card extends Component<ICard> {
 
 	set image(value: string) {
 		this.setImage(this._image, value, this.title);
+	}
+
+	set button(value: string) {
+		this.setText(this._button, value);
 	}
 
 	set description(value: string) {

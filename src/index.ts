@@ -78,16 +78,13 @@ events.on('formDeliveryErrors:change', (errors: Partial<IDeliveryForm>) => {
 		.join('; ');
 });
 
-// Изменился адрес доставки
-events.on(/^order\..*:change/, (data: { value: string }) => {
-	appData.setAddress(data.value);
-});
-
 // Открыть форму доставки
 events.on('delivery:open', () => {
+  appData.setPaymentMethod('');
+  deliveryForm.setClassPaymentMethod('');
 	modal.render({
 		content: deliveryForm.render({
-			payment: 'card',
+			payment: '',
 			address: '',
 			valid: false,
 			errors: [],
@@ -96,7 +93,7 @@ events.on('delivery:open', () => {
 });
 
 // выбрана оплата
-events.on(/^payment:.*/, (data: { target: string }) => {
+events.on('payment:changed', (data: { target: string }) => {
 	appData.setPaymentMethod(data.target);
 });
 
@@ -112,6 +109,11 @@ events.on('formContactsErrors:change', (errors: Partial<IContactForm>) => {
 	contactsForm.errors = Object.values({ phone, email })
 		.filter((i) => !!i)
 		.join('; ');
+});
+
+// Изменился адрес доставки
+events.on('order.address:change', (data: { value: string }) => {
+	appData.setAddress(data.value);
 });
 
 // Изменилось одно из полей контактов
@@ -198,27 +200,10 @@ events.on('basket:changed', () => {
 events.on('product:added', (item: Product) => {
 	appData.addProduct(item);
 	modal.close();
-	events.emit('basket:changed');
 });
 
 // Изменен открытый выбранный товар
 events.on('preview:changed', (item: Product) => {
-	const showItem = (item: Product) => {
-		const card = new Card('card', cloneTemplate(cardPreviewTemplate), {
-			onClick: () => events.emit('product:added', item),
-		});
-
-		modal.render({
-			content: card.render({
-				category: item.category,
-				title: item.title,
-				description: item.description,
-				image: item.image,
-				price: item.price,
-			}),
-		});
-	};
-
 	if (item) {
 		api
 			.getProduct(item.id)
@@ -229,7 +214,30 @@ events.on('preview:changed', (item: Product) => {
 				item.description = result.description;
 				item.image = result.image;
 				item.price = result.price;
-				showItem(item);
+
+				const card = new Card('card', cloneTemplate(cardPreviewTemplate), {
+					onClick: () => {
+						if (appData.productOrdered(item)) {
+							appData.deleteProduct(item.id);
+							modal.close();
+						} else {
+							events.emit('product:added', item);
+						}
+					},
+				});
+
+        const buttonText: string = appData.productOrdered(item) ? 'Убрать' : 'Купить';
+
+				modal.render({
+					content: card.render({
+						category: item.category,
+						title: item.title,
+						description: item.description,
+						image: item.image,
+						price: item.price,
+						button: buttonText,
+					}),
+				});
 			})
 			.catch((err) => {
 				console.error(err);

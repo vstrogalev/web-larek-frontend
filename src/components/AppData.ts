@@ -40,13 +40,13 @@ export class AppState extends Model<IAppState> {
 	}
 
 	// добавление товара
-	addProduct(item: IProduct) {
+	addProduct(item: IProduct): void {
 		this.basket.push(item);
 		this.emitChanges('basket:changed');
 	}
 
 	// удаление товара
-	deleteProduct(id: string) {
+	deleteProduct(id: string): void {
 		this.basket = this.basket.filter((item) => item.id !== id);
 		this.emitChanges('basket:changed');
 	}
@@ -59,7 +59,7 @@ export class AppState extends Model<IAppState> {
 	}
 
   // сбрасывает заказ в начальное состояние
-  resetOrder() {
+  resetOrder(): void {
     this.order = {
       payment: '',
       email: '',
@@ -83,27 +83,27 @@ export class AppState extends Model<IAppState> {
 		return this.basket;
 	}
 
+  productOrdered(item: IProduct): boolean {
+    return this.basket.includes(item);
+  }
+
 	completeOrder(): void {
 		this.order.total = this.getTotal();
 		this.order.items = this.getOrderedProducts().map((item) => item.id);
 	}
 
-	setPaymentMethod(method: string) {
+	setPaymentMethod(method: string): void {
 		this.order.payment = method as PaymentMethod;
-    if (this.validateDelivery()) {
-			this.events.emit('delivery:ready', this.order);
-		}
+    this.validateDelivery()
 	}
 
-	setAddress(value: string) {
+	setAddress(value: string): void {
 		this.order.address = value;
 
-		if (this.validateDelivery()) {
-			this.events.emit('delivery:ready', this.order);
-		}
+    this.validateDelivery()
 	}
 
-	validateDelivery(): boolean {
+	validateDelivery(): void {
 		const errors: typeof this.formErrors = {};
 
 		if (!this.order.payment) {
@@ -115,18 +115,15 @@ export class AppState extends Model<IAppState> {
 		this.formErrors = errors;
 		this.events.emit('formDeliveryErrors:change', this.formErrors);
 
-		return Object.keys(errors).length === 0;
 	}
 
-	setContactsField(field: keyof IContactForm, value: string): void {
+	setContactsField(field: keyof Partial<IContactForm>, value: string): void {
 		this.order[field] = value;
 
-		if (this.validateContacts()) {
-			this.events.emit('contacts:ready', this.order);
-		}
+    this.validateContacts();
 	}
 
-	validateContacts(): boolean {
+	validateContacts(): void {
 		const errors: typeof this.formErrors = {};
 		if (!this.order.email) {
 			errors.email = 'Необходимо указать email';
@@ -136,6 +133,5 @@ export class AppState extends Model<IAppState> {
 		}
 		this.formErrors = errors;
 		this.events.emit('formContactsErrors:change', this.formErrors);
-		return Object.keys(errors).length === 0;
 	}
 }

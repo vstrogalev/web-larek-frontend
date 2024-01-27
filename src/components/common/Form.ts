@@ -30,7 +30,7 @@ export class Form<T> extends Component<IFormState> {
         });
     }
 
-    protected onInputChange(field: keyof T, value: string) {
+    protected onInputChange(field: keyof T, value: string): void {
         this.events.emit(`${this.container.name}.${String(field)}:change`, {
             field,
             value
@@ -45,7 +45,7 @@ export class Form<T> extends Component<IFormState> {
         this.setText(this._errors, value);
     }
 
-    render(state: Partial<T> & IFormState) {
+    render(state: Partial<T> & IFormState): HTMLFormElement {
         const {valid, errors, ...inputs} = state;
         super.render({valid, errors});
         Object.assign(this, inputs);

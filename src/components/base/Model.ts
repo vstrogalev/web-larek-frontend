@@ -18,7 +18,7 @@ export abstract class Model<T> {
      * @param event
      * @param payload
      */
-    emitChanges(event: string, payload?: object) {
+    emitChanges(event: string, payload?: object): void {
         // Состав данных можно модифицировать
         this.events.emit(event, payload ?? {});
     }

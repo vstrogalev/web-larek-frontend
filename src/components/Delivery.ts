@@ -17,7 +17,7 @@ export class Delivery extends Form<IDeliveryForm> {
 
       this.setClassPaymentMethod(target.name);
 
-      events.emit(`payment:${target.name}`, {target: target.name})
+      events.emit(`payment:changed`, {target: target.name})
     })
 	}
 

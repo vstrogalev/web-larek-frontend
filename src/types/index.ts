@@ -17,6 +17,8 @@ export interface IProduct {
 export interface IContactForm {
 	email: string;
 	phone: string;
+  // payment: PaymentMethod;
+	address: string;
 }
 
 // типизация полей формы ввода формы оплаты и адреса
@@ -26,9 +28,9 @@ export interface IDeliveryForm {
 }
 
 // расширение типов форм до данных заказа
-export type IOrder = IContactForm &
-	IDeliveryForm & {
+export type IOrder = IContactForm & {
 		items: Id[];
+    payment: PaymentMethod;
 		total: number;
 	};
 
